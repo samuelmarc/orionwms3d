@@ -472,6 +472,18 @@
       min-height: 30px;
     }
 
+    .hud-timer {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 5px 0;
+      font: 800 28px var(--display);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud-timer.low { color: #b5452d; }
+    .hud-timer span { min-width: 57px; }
+
     .hud-combo {
       color: #5c7a3d;
       font-size: 12px;
@@ -546,27 +558,26 @@
       letter-spacing: .6px;
     }
 
-    .order-target {
-      font: 800 33px var(--display);
-      margin: 1px 0;
-      line-height: 1.15;
-      letter-spacing: 1px;
+    .order-positions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
     }
 
-    .order-target span {
-      font: 600 17px var(--font);
-      opacity: .4;
-      margin: 0 8px;
-    }
-
-    .order-aim {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 10px;
-      opacity: .8;
+    .order-target, .order-aim {
+      min-width: 0;
+      padding: 5px 4px;
+      border-radius: 5px;
+      text-align: center;
       font-variant-numeric: tabular-nums;
     }
+
+    .order-target { background: #ffffffa6; border: 1px solid #c6b28c; }
+    .order-aim { background: #e48a2520; border: 2px solid #bd6506; }
+    .blue .order-aim { background: #0083be15; border-color: #0077a9; }
+    .order-positions small { display: block; font: 900 9px var(--font); letter-spacing: .5px; }
+    .order-positions strong { display: block; font: 800 27px var(--display); line-height: 1.2; white-space: nowrap; }
 
     .order-done {
       position: absolute;
@@ -1004,7 +1015,8 @@
               class="name-input"
               placeholder="Quem vai jogar?"
               maxlength="12"
-              pattern="[A-Za-z]{1,12}"
+              minlength="3"
+              pattern="[A-Za-z]{3,12}"
               list="saved-players"
               autocomplete="off"
               spellcheck="false"
@@ -1013,7 +1025,7 @@
           </div>
 
           <datalist id="saved-players"></datalist>
-          <p id="profile-note" class="profile-note">Até 12 letras · A–Z</p>
+          <p id="profile-note" class="profile-note">De 3 a 12 letras · A–Z</p>
 
           <div id="difficulty-options" class="difficulty" role="group" aria-label="Dificuldade"></div>
           <p id="mode-detail" class="mode-detail"></p>
@@ -1022,7 +1034,7 @@
 
           <div class="menu-actions">
             <button id="help-button" class="text-button">Como jogar</button>
-            <button class="sound-button" data-sound aria-label="Ativar som" aria-pressed="false">
+            <button class="sound-button" data-sound aria-label="Desativar som" aria-pressed="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c3 2 3 6 0 8m3-11c5 4 5 10 0 14" />
               </svg>
@@ -1036,7 +1048,6 @@
           <h2 class="rank-title">RANKING <span aria-hidden="true">♛</span></h2>
           <div id="ranking-tabs" class="rank-tabs" role="tablist" aria-label="Ranking por dificuldade"></div>
           <div class="rank-list" id="ranking-list" role="tabpanel"></div>
-          <p class="rank-footnote">TOP 10 · SALVO NESTE NAVEGADOR</p>
         </section>
       </div>
     </div>
@@ -1049,13 +1060,17 @@
         <small>PTS</small>
       </div>
       <div id="lives" class="hud-lives" aria-label="Vidas">♥♥♥</div>
+      <div id="timer" class="hud-timer" role="timer" aria-label="Tempo restante">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M9 2h6M12 5V2m0 6v5l3 2"/></svg>
+        <span id="time-remaining">01:00</span>
+      </div>
       <div id="combo" class="hud-combo"></div>
     </div>
 
     <div id="orders" class="orders" aria-label="Ordens das caixas"></div>
 
     <div class="hud-right">
-      <button class="sound-button" data-sound aria-label="Ativar som" aria-pressed="false">
+      <button class="sound-button" data-sound aria-label="Desativar som" aria-pressed="true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c3 2 3 6 0 8m3-11c5 4 5 10 0 14" />
         </svg>
@@ -1069,8 +1084,8 @@
     </div>
 
     <div class="bottom-controls">
-      <span><kbd>←</kbd><kbd>→</kbd> coluna</span>
-      <span><kbd>↑</kbd><kbd>↓</kbd> linha</span>
+      <span><kbd>←</kbd><kbd>→</kbd> coluna Y</span>
+      <span><kbd>↑</kbd><kbd>↓</kbd> linha X</span>
       <span id="wasd-hint" class="channel-label" hidden><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> caixa azul</span>
     </div>
 
@@ -1098,26 +1113,28 @@
     const MODES = Object.freeze({
       easy: {
         name: 'Fácil',
-        cols: 3, rows: 2, lives: 3,
+        cols: 3, rows: 2, lives: 5,
         baseSpeed: 1.65, maxSpeed: 3.6, ramp: 0.004,
-        boxes: 1, hint: true,
-        symbol: 'Ⅰ', detail: '3 × 2 · 3 vidas'
+        boxes: 1, hint: false,
+        symbol: 'Ⅰ', detail: '2 linhas · 3 colunas · 5 vidas'
       },
       medium: {
         name: 'Médio',
-        cols: 4, rows: 3, lives: 1,
+        cols: 4, rows: 3, lives: 3,
         baseSpeed: 1.9, maxSpeed: 4.2, ramp: 0.0045,
         boxes: 1, hint: false,
-        symbol: 'Ⅱ', detail: '4 × 3 · 1 vida'
+        symbol: 'Ⅱ', detail: '3 linhas · 4 colunas · 3 vidas'
       },
       hard: {
         name: 'Difícil',
-        cols: 5, rows: 4, lives: 1,
+        cols: 5, rows: 4, lives: 2,
         baseSpeed: 1.65, maxSpeed: 3.6, ramp: 0.003,
         boxes: 2, hint: false,
-        symbol: 'Ⅲ', detail: '5 × 4 · 2 caixas'
+        symbol: 'Ⅲ', detail: '4 linhas · 5 colunas · 2 vidas'
       }
     });
+
+    const TIMER_SETTINGS = Object.freeze({ initial: 60, maximum: 90, waveBonus: 1 });
 
     const PRODUCTS = [
       { name: 'Motor elétrico', code: 'MTR-041', icon: 'M' },
@@ -1132,7 +1149,7 @@
     const randomInt = max => Math.floor(Math.random() * max);
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-    const rowDepth = (row, rows) => 5.6 - (row - 0.5) * 9.2 / rows;
+    const rowDepth = (row, rows) => -3.6 + (row - 0.5) * 9.2 / rows;
     const columnX = (col, cols) => (col - (cols + 1) / 2) * 10.6 / cols;
 
     class PlayerStore {
@@ -1205,7 +1222,7 @@
       }
 
       register(name) {
-        if (!/^[A-Z]{1,12}$/.test(name)) throw new Error('Use de 1 a 12 letras de A a Z.');
+        if (!/^[A-Z]{3,12}$/.test(name)) throw new Error('Use de 3 a 12 letras de A a Z.');
         if (Object.hasOwn(this.data.players, name)) throw new Error('Esse jogador já existe.');
 
         this.data.players[name] = { records: {} };
@@ -1268,6 +1285,7 @@
         this.stored = 0;
         this.lives = this.config.lives;
         this.elapsed = 0;
+        this.timeRemaining = TIMER_SETTINGS.initial;
         this.boxes = [];
         this.waveDelay = 0;
         this.countdown = 3;
@@ -1276,6 +1294,7 @@
       }
 
       spawnWave() {
+        this.waveSpeed = this.speed;
         this.boxes = Array.from({ length: this.config.boxes }, (_, channel) => ({
           id: ++this.serial,
           channel,
@@ -1290,6 +1309,10 @@
           },
           product: PRODUCTS[Math.floor(this.random() * PRODUCTS.length)]
         }));
+
+        const longestPath = Math.max(...this.boxes.map(box => rowDepth(box.target.row, this.config.rows) - box.z));
+        const roundTime = longestPath / this.waveSpeed + 0.85;
+        for (const box of this.boxes) box.timeReward = (roundTime + TIMER_SETTINGS.waveBonus) / this.boxes.length;
 
         this.emit('wave');
       }
@@ -1316,6 +1339,7 @@
       }
 
       resolve(box, success, reason) {
+        if (this.phase !== 'playing' || box.resolved) return;
         box.resolved = true;
         box.success = success;
 
@@ -1326,17 +1350,22 @@
 
           const bonus = Math.min(20, Math.floor(this.combo / 5) * 5);
           this.score += 10 + bonus;
-          this.emit('success', { box, points: 10 + bonus, bonus });
+          const previousTime = this.timeRemaining;
+          this.timeRemaining = Math.min(TIMER_SETTINGS.maximum, previousTime + (box.timeReward || 0));
+          this.emit('success', { box, points: 10 + bonus, bonus, timeAdded: this.timeRemaining - previousTime });
         } else {
           this.lives--;
           this.combo = 0;
           this.emit('miss', { box, reason });
 
-          if (!this.lives) {
-            this.phase = 'over';
-            this.emit('over', { reason });
-          }
+          if (!this.lives) this.finish(reason);
         }
+      }
+
+      finish(reason) {
+        if (this.phase === 'over') return;
+        this.phase = 'over';
+        this.emit('over', { reason });
       }
 
       update(dt) {
@@ -1352,7 +1381,14 @@
 
         if (this.phase !== 'playing') return;
 
-        this.elapsed += dt;
+        const activeTime = Math.min(dt, this.timeRemaining);
+        this.elapsed += activeTime;
+        this.timeRemaining = Math.max(0, this.timeRemaining - activeTime);
+        if (this.timeRemaining <= 1e-8) {
+          this.timeRemaining = 0;
+          this.finish('Tempo esgotado.');
+          return;
+        }
 
         if (!this.boxes.length || this.boxes.every(box => box.resolved)) {
           this.waveDelay -= dt;
@@ -1360,34 +1396,34 @@
           return;
         }
 
-        const speed = this.speed;
+        const speed = this.waveSpeed;
 
         for (const box of this.boxes) {
           if (box.resolved || this.phase !== 'playing') continue;
 
           box.z += dt * speed;
 
-          for (let row = this.config.rows; row >= 1; row--) {
+          for (let row = 1; row <= this.config.rows; row++) {
             if (box.checked.includes(row) || box.z < rowDepth(row, this.config.rows)) continue;
 
             box.checked.push(row);
 
             if (box.row === row) {
-              const passedTarget = box.checked.includes(box.target.row) && box.target.row > row;
+              const passedTarget = box.checked.includes(box.target.row) && box.target.row < row;
               if (passedTarget) continue;
 
               const success = box.col === box.target.col && row === box.target.row;
               this.resolve(
                 box,
                 success,
-                `Destino incorreto: pedido X${box.target.col} / Y${box.target.row}, enviado a X${box.col} / Y${row}.`
+                `Destino incorreto: pedido X${box.target.row} / Y${box.target.col}, enviado a X${row} / Y${box.col}.`
               );
               break;
             }
           }
 
           if (!box.resolved && box.z > 6.5) {
-            this.resolve(box, false, `Falha de estocagem: a caixa passou pela posição X${box.target.col} / Y${box.target.row}.`);
+            this.resolve(box, false, `Falha de estocagem: a caixa passou pela posição X${box.target.row} / Y${box.target.col}.`);
           }
         }
 
@@ -1415,50 +1451,136 @@
 
     class Soundtrack {
       constructor() {
-        this.enabled = false;
+        this.enabled = true;
         this.context = null;
+        this.phase = 'menu';
+        this.sources = new Set();
+        this.musicSources = new Set();
+        this.timer = null;
+        this.step = 0;
+        this.nextBeat = 0;
+      }
+
+      unlock() {
+        try {
+          if (!this.context) {
+            this.context = new (window.AudioContext || window.webkitAudioContext)();
+            this.master = this.context.createGain();
+            this.master.gain.value = this.enabled ? 0.75 : 0;
+            this.master.connect(this.context.destination);
+            this.music = this.context.createGain();
+            this.music.gain.value = 0.55;
+            this.music.connect(this.master);
+            this.effects = this.context.createGain();
+            this.effects.gain.value = 1;
+            this.effects.connect(this.master);
+          }
+          if (this.context.state === 'suspended') this.context.resume().catch(() => {});
+          return true;
+        } catch {
+          return false;
+        }
+      }
+
+      tone(frequency, at, duration, volume, type = 'sine', group = 'effects', endFrequency = frequency) {
+        const oscillator = this.context.createOscillator();
+        const gain = this.context.createGain();
+        const voices = group === 'music' ? this.musicSources : this.sources;
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, at);
+        if (endFrequency !== frequency) oscillator.frequency.exponentialRampToValueAtTime(endFrequency, at + duration);
+        gain.gain.setValueAtTime(0, at);
+        gain.gain.linearRampToValueAtTime(volume, at + Math.min(0.012, duration / 4));
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+        oscillator.connect(gain);
+        gain.connect(this[group]);
+        voices.add(oscillator);
+        oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
+        oscillator.start(at);
+        oscillator.stop(at + duration + 0.01);
+      }
+
+      stopVoices(voices) {
+        for (const source of voices) {
+          try { source.stop(); } catch {}
+        }
+        voices.clear();
       }
 
       toggle() {
         this.enabled = !this.enabled;
-        if (this.enabled) this.play('move');
+        if (this.enabled) this.unlock();
+        if (this.master) this.master.gain.setValueAtTime(this.enabled ? 0.75 : 0, this.context.currentTime);
+        if (!this.enabled) {
+          this.stopMusic();
+          this.stopVoices(this.sources);
+        } else {
+          this.play('move');
+          if (this.phase === 'playing') this.startMusic();
+        }
         return this.enabled;
       }
 
-      play(kind) {
-        if (!this.enabled) return;
+      reset() {
+        this.stopMusic();
+        this.stopVoices(this.sources);
+        this.step = 0;
+        this.phase = 'countdown';
+        if (this.enabled) this.unlock();
+      }
 
-        try {
-          this.context ||= new (window.AudioContext || window.webkitAudioContext)();
-          this.context.resume().catch(() => {});
+      setPhase(phase) {
+        if (phase === this.phase) return;
+        this.phase = phase;
+        if (phase === 'playing') this.startMusic();
+        else this.stopMusic();
+        if (phase === 'paused' || phase === 'menu') this.stopVoices(this.sources);
+      }
 
-          const notes = {
-            move: [350],
-            success: [523, 659, 784],
-            miss: [180, 120],
-            start: [392, 523]
-          }[kind];
+      startMusic() {
+        if (!this.enabled || this.timer !== null || !this.unlock()) return;
+        this.nextBeat = this.context.currentTime + 0.03;
+        this.scheduleMusic();
+        this.timer = setInterval(() => this.scheduleMusic(), 25);
+      }
 
-          notes.forEach((frequency, index) => {
-            const oscillator = this.context.createOscillator();
-            const gain = this.context.createGain();
-            const at = this.context.currentTime + index * 0.085;
+      stopMusic() {
+        if (this.timer !== null) clearInterval(this.timer);
+        this.timer = null;
+        this.stopVoices(this.musicSources);
+      }
 
-            oscillator.type = 'sine';
-            oscillator.frequency.value = frequency;
-
-            gain.gain.setValueAtTime(0, at);
-            gain.gain.linearRampToValueAtTime(0.055, at + 0.012);
-            gain.gain.exponentialRampToValueAtTime(0.001, at + 0.15);
-
-            oscillator.connect(gain);
-            gain.connect(this.context.destination);
-            oscillator.start(at);
-            oscillator.stop(at + 0.16);
-          });
-        } catch {
-          this.enabled = false;
+      scheduleMusic() {
+        if (!this.enabled || this.phase !== 'playing') return;
+        const melody = [76, 0, 79, 81, 79, 0, 76, 72, 74, 0, 76, 79, 76, 0, 74, 0,
+          72, 0, 76, 79, 81, 0, 79, 76, 74, 71, 0, 74, 79, 0, 74, 0];
+        const roots = [48, 45, 41, 43];
+        const frequency = note => 440 * 2 ** ((note - 69) / 12);
+        if (this.nextBeat < this.context.currentTime - 0.2) this.nextBeat = this.context.currentTime + 0.02;
+        while (this.nextBeat < this.context.currentTime + 0.12) {
+          const step = this.step % melody.length, at = this.nextBeat;
+          if (melody[step]) this.tone(frequency(melody[step]), at, 0.18, 0.035, 'triangle', 'music');
+          if (step % 2 === 0) this.tone(frequency(roots[Math.floor(step / 8)] + (step % 4 === 2 ? 7 : 0)), at, 0.22, 0.065, 'triangle', 'music');
+          if (step % 4 === 0) this.tone(115, at, 0.12, 0.065, 'sine', 'music', 42);
+          if (step % 2 === 1) this.tone(1800, at, 0.025, 0.012, 'triangle', 'music', 1000);
+          this.step++;
+          this.nextBeat += 60 / 116 / 2;
         }
+      }
+
+      play(kind) {
+        if (!this.enabled || !this.unlock()) return;
+        const notes = {
+          move: [350], success: [523, 659, 784], miss: [180, 120],
+          start: [392, 523], gameover: [392, 370, 330, 294, 196, 131]
+        }[kind];
+        if (!notes) return;
+        const over = kind === 'gameover';
+        notes.forEach((frequency, index) => {
+          this.tone(frequency, this.context.currentTime + index * (over ? 0.18 : 0.085),
+            over && index === notes.length - 1 ? 0.65 : over ? 0.23 : 0.15,
+            over ? 0.095 : 0.075, over ? 'triangle' : 'sine');
+        });
       }
     }
 
@@ -1667,15 +1789,15 @@
             );
             tile.add(border);
 
-            this.label(this.grid, `${col}.${row}`, x, 0.17, z + depth / 2 - 0.36, 1.65, '#60794f', true);
+            this.label(this.grid, `X${row} Y${col}`, x, 0.17, z + depth / 2 - 0.36, Math.min(2.3, width - 0.08), '#36572d', true);
             this.tiles.push({ col, row, tile });
           }
 
-          this.label(this.grid, `Y${row}`, -5.7, 0.17, rowDepth(row, rows), 1.15, '#536c44', true);
+          this.label(this.grid, `X${row}`, -5.7, 0.17, rowDepth(row, rows), 1.45, '#36572d', true);
         }
 
         for (let col = 1; col <= cols; col++) {
-          this.label(this.grid, `X${col}`, columnX(col, cols), 0.17, 6.05, 1.1, '#536c44', true);
+          this.label(this.grid, `Y${col}`, columnX(col, cols), 0.17, 6.05, 1.4, '#36572d', true);
         }
       }
 
@@ -1684,7 +1806,7 @@
         const isOrange = box.channel === 0;
         const color = isOrange ? '#f0a044' : '#4baada';
         const tape = isOrange ? '#f3d5a0' : '#b7dbe2';
-        const accent = isOrange ? '#bc8448' : '#548ba1';
+        const accent = isOrange ? '#c56500' : '#007bad';
 
         this.cube(group, [1.04, 1.04, 1.04], [0, 0, 0], color);
         this.cube(group, [0.23, 0.016, 1.06], [0, 0.53, 0], tape);
@@ -1702,14 +1824,27 @@
         this.scene.add(ring);
 
         const aim = new this.T.Group();
-        const aimWidth = 10.6 / MODES[this.mode].cols - 0.35;
-
+        const inset = isOrange ? 0.28 : 0.62;
+        const aimWidth = 10.6 / MODES[this.mode].cols - inset;
+        const aimDepth = 9.2 / MODES[this.mode].rows - inset;
+        const bar = (size, position) => {
+          const mesh = new this.T.Mesh(new this.T.BoxGeometry(...size), new this.T.MeshBasicMaterial({ color: accent }));
+          mesh.position.set(...position);
+          aim.add(mesh);
+        };
         for (const side of [-1, 1]) {
-          for (const end of [-1, 1]) {
-            this.cube(aim, [0.35, 0.035, 0.07], [side * (aimWidth / 2 - 0.17), 0, end * 0.5], accent);
-            this.cube(aim, [0.07, 0.035, 0.35], [side * aimWidth / 2, 0, end * 0.36], accent);
-          }
+          bar([aimWidth, 0.035, 0.1], [0, 0, side * aimDepth / 2]);
+          bar([0.1, 0.035, aimDepth], [side * aimWidth / 2, 0, 0]);
         }
+        const fill = new this.T.Mesh(
+          new this.T.PlaneGeometry(aimWidth, aimDepth),
+          new this.T.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.13, side: this.T.DoubleSide, depthWrite: false })
+        );
+        fill.rotation.x = -Math.PI / 2;
+        aim.add(fill);
+        bar([0.45, 0.04, 0.075], [0, 0.02, 0]);
+        bar([0.075, 0.04, 0.45], [0, 0.02, 0]);
+        this.label(aim, isOrange ? 'SETAS' : 'WASD', 0, 0.04, -aimDepth / 2 + 0.3, Math.min(1.7, aimWidth - 0.1), accent, true);
 
         this.scene.add(group, aim);
 
@@ -1810,13 +1945,6 @@
           entry.aim.visible = !preview;
         }
 
-        for (const { col, row, tile } of this.tiles) {
-          const lit = config.hint && boxes.some(box => !box.resolved && box.target.col === col && box.target.row === row);
-          tile.material.color.set(lit ? '#a7df4c' : '#c6d9ad');
-          tile.material.emissive.set(lit ? '#99b950' : '#000000');
-          tile.material.emissiveIntensity = lit ? 0.09 + Math.sin(time * 3) * 0.035 : 0;
-        }
-
         this.updateParticles(dt);
         this.renderer.render(this.scene, this.camera);
       }
@@ -1902,8 +2030,8 @@
         $('name-counter').textContent = `${name.length}/12`;
         $('profile-note').textContent = Object.hasOwn(this.store.data.players, name)
           ? 'Bem-vindo de volta! Seu recorde está salvo.'
-          : 'Até 12 letras · A–Z';
-        $('start-button').disabled = !this.ready || !/^[A-Z]{1,12}$/.test(name);
+          : 'De 3 a 12 letras · A–Z';
+        $('start-button').disabled = !this.ready || !/^[A-Z]{3,12}$/.test(name);
       }
 
       setMode(mode) {
@@ -1914,9 +2042,7 @@
           button.setAttribute('aria-pressed', button.dataset.mode === mode);
         });
 
-        const extra = mode === 'easy' ? ' · destino iluminado'
-          : mode === 'hard' ? ' · setas + WASD'
-          : ' · sem ajuda';
+        const extra = mode === 'hard' ? ' · setas + WASD' : '';
         $('mode-detail').textContent = MODES[mode].detail + extra;
         $('wasd-hint').hidden = mode !== 'hard';
 
@@ -1974,12 +2100,13 @@
 
         engine.addEventListener('late', () => this.feedback('Linha ultrapassada', true));
 
-        engine.addEventListener('ready', () => this.sound.play('start'));
+        engine.addEventListener('ready', () => { this.sound.setPhase('playing'); this.sound.play('start'); });
 
         engine.addEventListener('success', ({ detail }) => {
           this.warehouse.burst(detail.box, true);
           this.sound.play('success');
-          this.feedback(`+${detail.points}${detail.bonus ? ' · COMBO!' : ''}`);
+          const timeBonus = detail.timeAdded > 0 ? ` · +${detail.timeAdded.toFixed(1).replace('.', ',')}s` : '';
+          this.feedback(`+${detail.points} PTS${timeBonus}`);
           this.persistScore();
           this.renderOrders();
 
@@ -1990,7 +2117,7 @@
 
         engine.addEventListener('miss', ({ detail }) => {
           this.warehouse.burst(detail.box, false);
-          this.sound.play('miss');
+          if (engine.lives > 0) this.sound.play('miss');
           this.feedback(engine.lives ? '−1 VIDA' : 'FIM DE JOGO', true);
 
           if (!this.reducedMotion) {
@@ -2022,6 +2149,7 @@
             event.preventDefault();
             this.closeModal();
             this.engine.resume();
+            this.sound.setPhase(this.engine.phase);
           }
           return;
         }
@@ -2043,12 +2171,12 @@
         const controls = {
           ArrowLeft: [0, -1, 0],
           ArrowRight: [0, 1, 0],
-          ArrowUp: [0, 0, 1],
-          ArrowDown: [0, 0, -1],
+          ArrowUp: [0, 0, -1],
+          ArrowDown: [0, 0, 1],
           KeyA: [1, -1, 0],
           KeyD: [1, 1, 0],
-          KeyW: [1, 0, 1],
-          KeyS: [1, 0, -1]
+          KeyW: [1, 0, -1],
+          KeyS: [1, 0, 1]
         };
 
         const intent = controls[event.code];
@@ -2080,6 +2208,7 @@
 
         this.warehouse.buildGrid(this.mode);
         this.engine.start(this.mode);
+        this.sound.reset();
         this.lastTime = performance.now();
 
         this.updateHud();
@@ -2097,6 +2226,7 @@
 
         this.closeModal();
         this.engine.menu();
+        this.sound.setPhase('menu');
 
         $('menu-screen').hidden = false;
         $('game-ui').hidden = true;
@@ -2110,12 +2240,9 @@
       }
 
       renderOrders() {
-        const { boxes, config } = this.engine;
+        const { boxes } = this.engine;
 
         $('orders').innerHTML = boxes.map(box => {
-          const position = box.target.row === 1 ? 'frente'
-            : box.target.row === config.rows ? 'fundo'
-            : '';
           const done = box.resolved
             ? `<div class="order-done">${box.success ? '✓' : '×'}</div>`
             : '';
@@ -2126,10 +2253,9 @@
                 <span class="product">${box.product.name}</span>
                 <span class="order-control">${box.channel ? 'WASD' : 'SETAS'}</span>
               </div>
-              <div class="order-target">X${box.target.col}<span>/</span>Y${box.target.row}</div>
-              <div class="order-aim">
-                <span>Mira: X${box.col} / Y${box.row}</span>
-                <span>${position}</span>
+              <div class="order-positions">
+                <div class="order-target"><small>DESTINO</small><strong>X${box.target.row} / Y${box.target.col}</strong></div>
+                <div class="order-aim"><small>SUA MIRA</small><strong>X${box.row} / Y${box.col}</strong></div>
               </div>
               ${done}
             </article>`;
@@ -2163,6 +2289,9 @@
         $('lives').textContent = '♥'.repeat(Math.max(0, lives));
         $('lives').setAttribute('aria-label', `${lives} ${lives === 1 ? 'vida' : 'vidas'}`);
         $('combo').textContent = combo >= 2 ? `${combo} EM SEQUÊNCIA` : '';
+        const seconds = Math.ceil(this.engine.timeRemaining);
+        $('time-remaining').textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+        $('timer').classList.toggle('low', this.engine.timeRemaining <= 10);
       }
 
       feedback(message, error = false) {
@@ -2189,6 +2318,7 @@
 
       pause() {
         if (!this.engine.pause()) return;
+        this.sound.setPhase('paused');
 
         this.openModal(`
           <h2 id="modal-title">PAUSA</h2>
@@ -2198,6 +2328,7 @@
         $('resume-button').onclick = () => {
           this.closeModal();
           this.engine.resume();
+          this.sound.setPhase(this.engine.phase);
         };
         $('leave-button').onclick = () => this.returnMenu();
       }
@@ -2207,23 +2338,23 @@
           <h2 id="modal-title">COMO JOGAR</h2>
           <div class="help-step">
             <span class="number">1</span>
-            <span>Leia o destino da caixa: <b>X é coluna, Y é linha.</b></span>
+            <span>Compare <b>DESTINO</b> e <b>SUA MIRA</b>. <b>X é linha; Y é coluna.</b></span>
           </div>
           <div class="help-step">
             <span class="number">2</span>
             <span>
-              <kbd>←</kbd> <kbd>→</kbd> escolhem a coluna.<br>
-              <kbd>↑</kbd> vai ao fundo. <kbd>↓</kbd> vai à frente.
+              <kbd>←</kbd> <kbd>→</kbd> mudam a coluna Y.<br>
+              <kbd>↑</kbd> <kbd>↓</kbd> mudam a linha X.
             </span>
           </div>
           <div class="help-step">
             <span class="number">3</span>
-            <span>Acerte a posição <b>antes de a caixa chegar.</b> Cada acerto vale pontos.</span>
+            <span>Comece com <b>60 segundos</b>. Acertos renovam o tempo, até <b>90 segundos</b> de reserva.</span>
           </div>
           <p class="help-small">
             No difícil, a caixa azul usa <b>WASD</b>.<br>
-            Y1 fica na frente. <b>Esc</b> pausa.<br>
-            Acertos em sequência dão bônus.
+            X1 é a primeira linha, no topo. <b>Esc</b> pausa.<br>
+            O contorno no chão é sua mira, sem dica de acerto.
           </p>
           <button class="primary" id="help-close">ENTENDI</button>`);
 
@@ -2231,11 +2362,13 @@
       }
 
       gameOver(reason) {
+        this.sound.setPhase('over');
+        this.sound.play('gameover');
         this.persistScore();
         this.updateHud();
 
         const isRecord = this.engine.score > this.startingBest;
-        const detail = reason.startsWith('Falha')
+        const detail = reason === 'Tempo esgotado.' ? 'O tempo acabou.' : reason.startsWith('Falha')
           ? 'A caixa passou do destino.'
           : 'A caixa foi para a posição errada.';
 
@@ -2244,10 +2377,8 @@
           <div class="result-score">${this.engine.score.toLocaleString('pt-BR')}</div>
           <div class="result-record">${isRecord ? 'NOVO RECORDE!' : 'PONTOS'}</div>
           <p class="result-reason">${detail}</p>
-          <button class="primary" id="retry-button">JOGAR DE NOVO ↻</button>
-          <button class="secondary" id="menu-button">Voltar ao menu</button>`);
+          <button class="primary" id="menu-button">VOLTAR AO MENU</button>`);
 
-        $('retry-button').onclick = () => this.start();
         $('menu-button').onclick = () => this.returnMenu();
       }
 
