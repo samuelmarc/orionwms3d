@@ -1126,13 +1126,32 @@
         e.stopPropagation();
       };
 
+      const isInputActive = () => {
+        const active = document.activeElement;
+        return active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+      };
+
       window.addEventListener('keydown', (e) => {
+        if (isInputActive()) {
+          if (e.ctrlKey || e.altKey || e.metaKey) {
+            preventBehavior(e);
+          }
+          return;
+        }
+
         if (e.ctrlKey || e.altKey || e.metaKey || !allowedKeys.has(e.code)) {
           preventBehavior(e);
         }
       }, true);
 
       window.addEventListener('keyup', (e) => {
+        if (isInputActive()) {
+          if (e.ctrlKey || e.altKey || e.metaKey) {
+            preventBehavior(e);
+          }
+          return;
+        }
+
         if (e.ctrlKey || e.altKey || e.metaKey || !allowedKeys.has(e.code)) {
           preventBehavior(e);
         }
@@ -1174,7 +1193,11 @@
         lastTouchTime = currentTime;
       }, { passive: false, capture: true });
 
-      document.addEventListener('selectstart', preventBehavior, true);
+      document.addEventListener('selectstart', (e) => {
+        if (!isInputActive()) {
+          preventBehavior(e);
+        }
+      }, true);
     })();
   </script>
 
