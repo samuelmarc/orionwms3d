@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#142e3c">
+  <title>WMS Rush 3D</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Nunito+Sans:wght@400;600;700;800;900&display=swap');
+
+    :root {
+      --ink: #183544;
+      --panel: #203f50;
+      --panel-dark: #172f3e;
+      --muted: #a4bcc6;
+      --yellow: #ffd369;
+      --orange: #f1a543;
+      --blue: #68c3ec;
+      --white: #f5f9ec;
+      --font: 'Nunito Sans', sans-serif;
+      --display: 'Barlow Condensed', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--white);
+      background: var(--ink);
+    }
+
+    button,
+    input {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button {
+      cursor: pointer;
+      color: inherit;
+      transition: transform .15s, background .15s, border-color .15s;
+    }
+
+    button:disabled {
+      cursor: default;
+      opacity: .45;
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(2px);
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 4px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      background: #dce5d1;
+    }
+
+    .stage canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .menu-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #0d293be8;
+      overflow: auto;
+    }
+
+    .menu-screen::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 10%, #5d95a72c, transparent 70%);
+    }
+
+    .menu-wrap {
+      width: min(830px, 100%);
+      position: relative;
+    }
+
+    .menu-columns {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .game-logo {
+      text-align: center;
+      margin: 0 0 26px;
+      font-family: var(--display);
+      line-height: .9;
+      transform: rotate(-3deg);
+      user-select: none;
+    }
+
+    .logo-top {
+      display: block;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 11px;
+      color: #adc5c5;
+      padding-left: 11px;
+      margin-bottom: 5px;
+    }
+
+    .logo-main {
+      color: var(--yellow);
+      font-size: clamp(72px, 9vw, 108px);
+      font-weight: 900;
+      letter-spacing: -1px;
+      text-shadow: 0 6px 0 #94542b, 0 12px 22px #071a2855;
+    }
+
+    .logo-main i {
+      font-style: normal;
+      color: #f4f9e9;
+      font-size: .4em;
+      display: inline-block;
+      transform: rotate(7deg);
+      vertical-align: top;
+      margin-top: 9px;
+      margin-left: 5px;
+      text-shadow: 0 3px 0 #78999e;
+    }
+
+    .menu-panel {
+      position: relative;
+      border: 2px solid #506874;
+      background: var(--panel);
+      border-radius: 15px;
+      padding: 27px;
+      box-shadow: 0 7px 0 #0e2430, inset 0 1px 0 #78919a33;
+    }
+
+    .menu-panel::before,
+    .menu-panel::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #7e969b;
+      box-shadow: inset 0 1px #aec2bf;
+    }
+
+    .menu-panel::before {
+      left: 10px;
+    }
+
+    .menu-panel::after {
+      right: 10px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .6px;
+      margin-bottom: 9px;
+    }
+
+    .name-field {
+      position: relative;
+    }
+
+    .name-input {
+      width: 100%;
+      height: 52px;
+      background: #112b3a;
+      border: 2px solid #577687;
+      border-radius: 8px;
+      color: white;
+      padding: 10px 50px 10px 15px;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .name-input::placeholder {
+      color: #79939f;
+      font-size: 14px;
+      letter-spacing: 0;
+      font-weight: 600;
+      text-transform: none;
+    }
+
+    .name-counter {
+      position: absolute;
+      right: 12px;
+      top: 18px;
+      font-size: 10px;
+      color: #8aa4af;
+      pointer-events: none;
+    }
+
+    .profile-note {
+      color: var(--muted);
+      font-size: 11px;
+      min-height: 16px;
+      margin: 7px 0 23px;
+    }
+
+    .difficulty {
+      display: flex;
+      gap: 8px;
+      margin: 0 0 9px;
+    }
+
+    .difficulty-button {
+      flex: 1;
+      border: 2px solid #526d7b;
+      background: #183545;
+      border-radius: 8px;
+      padding: 12px 4px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .difficulty-button:hover {
+      border-color: #9aaeb5;
+    }
+
+    .difficulty-button[aria-pressed="true"] {
+      background: var(--yellow);
+      border-color: var(--yellow);
+      color: #573e27;
+      box-shadow: 0 3px 0 #c68f3e;
+    }
+
+    .mode-detail {
+      margin: 0 0 22px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      min-height: 17px;
+    }
+
+    .primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      width: 100%;
+      min-height: 55px;
+      padding: 13px 20px;
+      border: 2px solid #ffe09b;
+      border-radius: 9px;
+      background: var(--yellow);
+      color: #553921;
+      box-shadow: 0 5px 0 #bb813a;
+      font: 800 24px var(--display);
+      letter-spacing: 1.5px;
+    }
+
+    .primary:hover:not(:disabled) {
+      background: #ffdf8d;
+    }
+
+    .primary:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #bb813a;
+    }
+
+    .menu-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .text-button {
+      background: transparent;
+      border: 0;
+      padding: 5px;
+      color: #c1d2d5;
+      font-size: 12px;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .sound-button,
+    .square-button {
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      background: #173444;
+      border: 2px solid #58717f;
+      border-radius: 8px;
+    }
+
+    .sound-button[aria-pressed="false"] {
+      color: #7d95a1;
+    }
+
+    .storage-warning {
+      margin: 12px 0 0;
+      color: #ffc780;
+      font-size: 11px;
+    }
+
+    .rank-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0;
+      font: 800 26px var(--display);
+      letter-spacing: .5px;
+    }
+
+    .rank-title span {
+      color: var(--yellow);
+      font-size: 23px;
+    }
+
+    .rank-tabs {
+      display: flex;
+      gap: 5px;
+      margin: 19px 0 12px;
+    }
+
+    .rank-tab {
+      flex: 1;
+      background: none;
+      border: 0;
+      border-bottom: 2px solid #476371;
+      color: #a1b9c2;
+      font-size: 11px;
+      padding: 8px 3px;
+    }
+
+    .rank-tab[aria-selected="true"] {
+      border-color: var(--yellow);
+      color: var(--yellow);
+      font-weight: 900;
+    }
+
+    .rank-list {
+      min-height: 198px;
+      max-height: 276px;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #6b8691 transparent;
+    }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 36px;
+      padding: 7px 0;
+      border-bottom: 1px solid #3b5865;
+      font-size: 12px;
+    }
+
+    .rank-row:first-child {
+      color: var(--yellow);
+    }
+
+    .rank-row b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+    .rank-row .position {
+      font: 700 17px var(--display);
+      color: #89a6b2;
+    }
+
+    .rank-score {
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }
+
+    .rank-empty {
+      min-height: 188px;
+      display: grid;
+      align-content: center;
+      text-align: center;
+      color: #9ab3bd;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .rank-empty span {
+      color: #496976;
+      font: 700 46px var(--display);
+    }
+
+    .rank-footnote {
+      text-align: center;
+      color: #8aa7b1;
+      font-size: 9px;
+      margin: 15px 0 0;
+    }
+
+    .game-ui {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .hud-left {
+      position: absolute;
+      left: 25px;
+      top: 23px;
+      color: #1b3b38;
+    }
+
+    .hud-score {
+      display: flex;
+      align-items: baseline;
+      gap: 9px;
+    }
+
+    .hud-score strong {
+      font: 800 clamp(38px, 4vw, 58px) var(--display);
+      line-height: 1;
+      text-shadow: 0 2px #faffeb;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud-score small {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .hud-lives {
+      color: #d35d44;
+      font-size: 23px;
+      letter-spacing: 4px;
+      min-height: 30px;
+    }
+
+    .hud-combo {
+      color: #5c7a3d;
+      font-size: 12px;
+      font-weight: 900;
+      min-height: 17px;
+    }
+
+    .hud-right {
+      position: absolute;
+      right: 24px;
+      top: 24px;
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .hud-right .square-button,
+    .hud-right .sound-button {
+      background: #f3f7e9e6;
+      border-color: #9cab8b;
+      color: #385745;
+    }
+
+    .orders {
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      width: max-content;
+      max-width: calc(100vw - 340px);
+    }
+
+    .order {
+      position: relative;
+      width: 250px;
+      padding: 9px 17px;
+      background: #fff1cf;
+      border: 2px solid #c98e42;
+      border-top: 6px solid var(--orange);
+      border-radius: 10px;
+      box-shadow: 0 4px 0 #a4773d30;
+      color: #543f27;
+    }
+
+    .order.blue {
+      background: #e0f4f7;
+      border-color: #5397b2;
+      border-top-color: var(--blue);
+      color: #245c73;
+    }
+
+    .order-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .product {
+      font-size: 11px;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .order-control {
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .6px;
+    }
+
+    .order-target {
+      font: 800 33px var(--display);
+      margin: 1px 0;
+      line-height: 1.15;
+      letter-spacing: 1px;
+    }
+
+    .order-target span {
+      font: 600 17px var(--font);
+      opacity: .4;
+      margin: 0 8px;
+    }
+
+    .order-aim {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      opacity: .8;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .order-done {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: #f9f3dfee;
+      border-radius: 5px;
+      color: #41764f;
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .blue .order-done {
+      background: #e6f5f3ee;
+    }
+
+    .bottom-controls {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 19px;
+      white-space: nowrap;
+      color: #4e6950;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f2f6e6dd;
+      padding: 8px 17px;
+      border-radius: 8px;
+      border: 1px solid #bdc9ab;
+    }
+
+    kbd {
+      display: inline-grid;
+      place-items: center;
+      min-width: 22px;
+      height: 23px;
+      font-family: var(--font);
+      font-size: 11px;
+      color: #3f5942;
+      background: #fcfef5;
+      border: 1px solid #9aaa8d;
+      border-bottom-width: 3px;
+      border-radius: 4px;
+    }
+
+    .channel-label {
+      color: #35798f;
+    }
+
+    .feedback {
+      position: absolute;
+      top: 145px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fbfff0ed;
+      color: #466a38;
+      padding: 8px 18px;
+      border-radius: 7px;
+      border: 1px solid #a4bb83;
+      font: 800 23px var(--display);
+      white-space: nowrap;
+    }
+
+    .feedback.error {
+      color: #b84b30;
+      border-color: #d6a282;
+      background: #fff2e4;
+    }
+
+    .countdown {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      color: #244f40;
+      background: #edf3dc22;
+      text-align: center;
+    }
+
+    .countdown strong {
+      font: 900 150px var(--display);
+      text-shadow: 0 6px #f9ffeb;
+      line-height: 1;
+    }
+
+    .countdown span {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 3px;
+    }
+
+    .error-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      box-shadow: inset 0 0 130px #d85133;
+      opacity: 0;
+    }
+
+    .load-error {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      background: #142e3cf5;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      padding: 40px;
+      color: #e6eef1;
+    }
+
+    .load-error p {
+      max-width: 440px;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: #112b3bbd;
+      backdrop-filter: blur(5px);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .modal {
+      width: 400px;
+      max-width: 100%;
+      max-height: calc(100dvh - 40px);
+      overflow: auto;
+      background: var(--panel);
+      border: 2px solid #65818d;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 8px 0 #0c222f;
+      text-align: center;
+    }
+
+    .modal h2 {
+      font: 800 36px var(--display);
+      margin: 0 0 20px;
+    }
+
+    .modal p {
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .modal .secondary {
+      width: 100%;
+      margin-top: 18px;
+      border: 0;
+      background: transparent;
+      color: #aec5cb;
+      padding: 9px;
+      font-size: 12px;
+    }
+
+    .result-score {
+      font: 800 80px var(--display);
+      color: var(--yellow);
+      line-height: 1;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .result-record {
+      color: var(--yellow);
+      font-size: 12px;
+      font-weight: 900;
+      margin: 10px 0;
+      min-height: 17px;
+    }
+
+    .result-reason {
+      margin: 15px 0 23px;
+    }
+
+    .help-step {
+      display: flex;
+      gap: 13px;
+      align-items: center;
+      text-align: left;
+      margin: 20px 0;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #c5d5d8;
+    }
+
+    .help-step .number {
+      font: 800 30px var(--display);
+      color: var(--yellow);
+      min-width: 25px;
+    }
+
+    .help-step b {
+      color: #f5f9ee;
+    }
+
+    .help-step kbd {
+      background: #122d3b;
+      color: #d8e5df;
+      border-color: #5b7987;
+    }
+
+    .help-small {
+      border-top: 1px solid #456371;
+      padding-top: 14px;
+      margin-bottom: 23px;
+    }
+
+    @media (max-height: 760px) {
+      .menu-screen {
+        padding: 19px;
+      }
+
+      .game-logo {
+        margin-bottom: 20px;
+      }
+
+      .logo-top {
+        font-size: 17px;
+        margin-bottom: 4px;
+      }
+
+      .logo-main {
+        font-size: 82px;
+      }
+
+      .menu-panel {
+        padding: 23px;
+      }
+
+      .profile-note {
+        margin-bottom: 18px;
+      }
+
+      .rank-list {
+        max-height: 250px;
+      }
+    }
+
+    @media (max-width: 1000px) {
+      .orders {
+        max-width: calc(100vw - 290px);
+        gap: 8px;
+      }
+
+      .order {
+        width: 215px;
+        padding-inline: 12px;
+      }
+
+      .hud-left {
+        left: 18px;
+      }
+
+      .hud-right {
+        right: 18px;
+      }
+
+      .hud-score small {
+        display: none;
+      }
+
+      .hud-score strong {
+        font-size: 42px;
+      }
+    }
+
+    @media (max-width: 780px) {
+      .menu-screen {
+        padding: 18px;
+      }
+
+      .menu-columns {
+        gap: 14px;
+      }
+
+      .menu-panel {
+        padding: 21px;
+      }
+
+      .difficulty {
+        gap: 5px;
+      }
+
+      .difficulty-button {
+        font-size: 12px;
+      }
+
+      .orders {
+        top: 80px;
+        max-width: calc(100vw - 30px);
+      }
+
+      .order {
+        width: 205px;
+        padding: 7px 11px;
+      }
+
+      .order-target {
+        font-size: 28px;
+      }
+
+      .hud-left {
+        top: 17px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .hud-lives {
+        font-size: 20px;
+      }
+
+      .hud-combo {
+        font-size: 10px;
+      }
+
+      .hud-right {
+        top: 17px;
+      }
+
+      .feedback {
+        top: 193px;
+      }
+    }
+
+    @media (max-width: 580px) {
+      .menu-screen {
+        display: block;
+      }
+
+      .menu-wrap {
+        margin: 15px auto;
+      }
+
+      .menu-columns {
+        grid-template-columns: 1fr;
+      }
+
+      .game-logo {
+        margin-bottom: 27px;
+      }
+
+      .menu-panel {
+        padding: 22px;
+      }
+
+      .rank-list {
+        min-height: 120px;
+        max-height: 200px;
+      }
+
+      .rank-empty {
+        min-height: 120px;
+      }
+
+      .bottom-controls {
+        font-size: 9px;
+        gap: 9px;
+        padding: 7px;
+      }
+
+      .bottom-controls kbd {
+        min-width: 17px;
+        height: 20px;
+        font-size: 9px;
+      }
+
+      .order {
+        width: min(205px, calc((100vw - 40px) / 2));
+      }
+
+      .order:only-child {
+        width: 230px;
+      }
+
+      .order-control {
+        font-size: 8px;
+      }
+
+      .product {
+        font-size: 10px;
+      }
+
+      .order-target {
+        font-size: 27px;
+      }
+
+      .order-aim {
+        font-size: 9px;
+      }
+
+      .hud-combo {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      button {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main id="stage" class="stage" aria-label="Área do jogo"></main>
+
+  <section id="menu-screen" class="menu-screen" aria-label="Menu inicial">
+    <div class="menu-wrap">
+      <h1 class="game-logo" aria-label="WMS Rush 3D">
+        <span class="logo-top">WMS</span>
+        <span class="logo-main">RUSH<i>3D</i></span>
+      </h1>
+
+      <div class="menu-columns">
+        <section class="menu-panel">
+          <label for="player-name" class="field-label">SEU NOME</label>
+
+          <div class="name-field">
+            <input
+              id="player-name"
+              class="name-input"
+              placeholder="Quem vai jogar?"
+              maxlength="12"
+              pattern="[A-Za-z]{1,12}"
+              list="saved-players"
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <span id="name-counter" class="name-counter">0/12</span>
+          </div>
+
+          <datalist id="saved-players"></datalist>
+          <p id="profile-note" class="profile-note">Até 12 letras · A–Z</p>
+
+          <div id="difficulty-options" class="difficulty" role="group" aria-label="Dificuldade"></div>
+          <p id="mode-detail" class="mode-detail"></p>
+
+          <button class="primary" id="start-button" disabled>CARREGANDO…</button>
+
+          <div class="menu-actions">
+            <button id="help-button" class="text-button">Como jogar</button>
+            <button class="sound-button" data-sound aria-label="Ativar som" aria-pressed="false">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c3 2 3 6 0 8m3-11c5 4 5 10 0 14" />
+              </svg>
+            </button>
+          </div>
+
+          <p id="storage-warning" class="storage-warning" hidden>O navegador não está salvando os recordes.</p>
+        </section>
+
+        <section class="menu-panel" aria-label="Ranking local">
+          <h2 class="rank-title">RANKING <span aria-hidden="true">♛</span></h2>
+          <div id="ranking-tabs" class="rank-tabs" role="tablist" aria-label="Ranking por dificuldade"></div>
+          <div class="rank-list" id="ranking-list" role="tabpanel"></div>
+          <p class="rank-footnote">TOP 10 · SALVO NESTE NAVEGADOR</p>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section id="game-ui" class="game-ui" aria-label="Partida" hidden>
+    <div class="hud-left">
+      <div class="hud-score">
+        <strong id="score">0</strong>
+        <small>PTS</small>
+      </div>
+      <div id="lives" class="hud-lives" aria-label="Vidas">♥♥♥</div>
+      <div id="combo" class="hud-combo"></div>
+    </div>
+
+    <div id="orders" class="orders" aria-label="Ordens das caixas"></div>
+
+    <div class="hud-right">
+      <button class="sound-button" data-sound aria-label="Ativar som" aria-pressed="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c3 2 3 6 0 8m3-11c5 4 5 10 0 14" />
+        </svg>
+      </button>
+      <button id="pause-button" class="square-button" aria-label="Pausar jogo" title="Pausar · Esc">
+        <svg width="16" height="18" viewBox="0 0 16 18" fill="currentColor" aria-hidden="true">
+          <rect x="2" y="2" width="4" height="14" rx="1" />
+          <rect x="10" y="2" width="4" height="14" rx="1" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="bottom-controls">
+      <span><kbd>←</kbd><kbd>→</kbd> coluna</span>
+      <span><kbd>↑</kbd><kbd>↓</kbd> linha</span>
+      <span id="wasd-hint" class="channel-label" hidden><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> caixa azul</span>
+    </div>
+
+    <div id="feedback" class="feedback" role="status" hidden></div>
+
+    <div id="countdown" class="countdown" hidden>
+      <strong id="countdown-number">3</strong>
+      <span>PREPARE-SE</span>
+    </div>
+  </section>
+
+  <div id="error-flash" class="error-flash"></div>
+
+  <div id="load-error" class="load-error" hidden>
+    <h2>O armazém não carregou</h2>
+    <p>Confira sua conexão e a aceleração gráfica do navegador.</p>
+    <button id="reload-button" class="primary">TENTAR NOVAMENTE</button>
+  </div>
+
+  <div id="modal-overlay" class="overlay" hidden>
+    <section id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"></section>
+  </div>
+
+  <script type="module">
+    const MODES = Object.freeze({
+      easy: {
+        name: 'Fácil',
+        cols: 3, rows: 2, lives: 3,
+        baseSpeed: 1.65, maxSpeed: 3.6, ramp: 0.004,
+        boxes: 1, hint: true,
+        symbol: 'Ⅰ', detail: '3 × 2 · 3 vidas'
+      },
+      medium: {
+        name: 'Médio',
+        cols: 4, rows: 3, lives: 1,
+        baseSpeed: 1.9, maxSpeed: 4.2, ramp: 0.0045,
+        boxes: 1, hint: false,
+        symbol: 'Ⅱ', detail: '4 × 3 · 1 vida'
+      },
+      hard: {
+        name: 'Difícil',
+        cols: 5, rows: 4, lives: 1,
+        baseSpeed: 1.65, maxSpeed: 3.6, ramp: 0.003,
+        boxes: 2, hint: false,
+        symbol: 'Ⅲ', detail: '5 × 4 · 2 caixas'
+      }
+    });
+
+    const PRODUCTS = [
+      { name: 'Motor elétrico', code: 'MTR-041', icon: 'M' },
+      { name: 'Contatora', code: 'CTR-012', icon: 'C' },
+      { name: 'Inversor', code: 'INV-028', icon: 'I' },
+      { name: 'Sensor indutivo', code: 'SNR-036', icon: 'S' },
+      { name: 'Rolamento', code: 'RLM-007', icon: 'R' },
+      { name: 'Disjuntor', code: 'DSJ-023', icon: 'D' }
+    ];
+
+    const $ = id => document.getElementById(id);
+    const randomInt = max => Math.floor(Math.random() * max);
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const rowDepth = (row, rows) => 5.6 - (row - 0.5) * 9.2 / rows;
+    const columnX = (col, cols) => (col - (cols + 1) / 2) * 10.6 / cols;
+
+    class PlayerStore {
+      constructor(storage = window.localStorage) {
+        this.storage = storage;
+        this.available = true;
+        this.data = { version: 1, players: {}, lastPlayer: '' };
+
+        try {
+          const saved = JSON.parse(storage.getItem('wms-rush-v1') || 'null');
+
+          if (saved?.version === 1 && saved.players && typeof saved.players === 'object') {
+            for (const [name, player] of Object.entries(saved.players)) {
+              if (!/^[A-Z]{1,12}$/.test(name) || !player || typeof player !== 'object') continue;
+
+              const records = {};
+              for (const mode of Object.keys(MODES)) {
+                const record = player.records?.[mode];
+                if (record && Number.isSafeInteger(record.score) && record.score > 0 && Number.isFinite(record.at)) {
+                  records[mode] = record;
+                }
+              }
+              this.data.players[name] = { records };
+            }
+
+            if (Object.hasOwn(this.data.players, saved.lastPlayer)) {
+              this.data.lastPlayer = saved.lastPlayer;
+            }
+          }
+
+          storage.setItem('wms-rush-check', '1');
+          storage.removeItem('wms-rush-check');
+        } catch {
+          this.available = false;
+        }
+      }
+
+      save() {
+        try {
+          let saved = null;
+          try {
+            saved = JSON.parse(this.storage.getItem('wms-rush-v1') || 'null');
+          } catch {}
+
+          if (saved?.version === 1 && saved.players && typeof saved.players === 'object') {
+            for (const [name, player] of Object.entries(saved.players)) {
+              if (!/^[A-Z]{1,12}$/.test(name) || !player || typeof player !== 'object') continue;
+
+              this.data.players[name] ||= { records: {} };
+
+              for (const mode of Object.keys(MODES)) {
+                const record = player.records?.[mode];
+                const current = this.data.players[name].records[mode];
+
+                if (!record || !Number.isSafeInteger(record.score) || record.score <= 0 || !Number.isFinite(record.at)) continue;
+
+                const isBetter = record.score > current?.score;
+                const isEarlierTie = record.score === current?.score && record.at < current.at;
+                if (!current || isBetter || isEarlierTie) {
+                  this.data.players[name].records[mode] = record;
+                }
+              }
+            }
+          }
+
+          this.storage.setItem('wms-rush-v1', JSON.stringify(this.data));
+        } catch {
+          this.available = false;
+        }
+      }
+
+      register(name) {
+        if (!/^[A-Z]{1,12}$/.test(name)) throw new Error('Use de 1 a 12 letras de A a Z.');
+        if (Object.hasOwn(this.data.players, name)) throw new Error('Esse jogador já existe.');
+
+        this.data.players[name] = { records: {} };
+        this.select(name);
+      }
+
+      select(name) {
+        this.data.lastPlayer = name;
+        this.save();
+      }
+
+      best(name, mode) {
+        return this.data.players[name]?.records[mode]?.score || 0;
+      }
+
+      record(name, mode, score) {
+        if (score <= this.best(name, mode)) return false;
+
+        this.data.players[name].records[mode] = { score, at: Date.now() };
+        this.save();
+        return true;
+      }
+
+      ranking(mode) {
+        return Object.entries(this.data.players)
+          .filter(([, player]) => player.records[mode])
+          .map(([name, player]) => ({ name, ...player.records[mode] }))
+          .sort((a, b) => b.score - a.score || a.at - b.at || a.name.localeCompare(b.name))
+          .slice(0, 10);
+      }
+    }
+
+    class GameEngine extends EventTarget {
+      constructor(random = Math.random) {
+        super();
+        this.random = random;
+        this.phase = 'menu';
+        this.mode = 'easy';
+        this.boxes = [];
+        this.serial = 0;
+      }
+
+      emit(type, detail = {}) {
+        this.dispatchEvent(new CustomEvent(type, { detail }));
+      }
+
+      get config() {
+        return MODES[this.mode];
+      }
+
+      get speed() {
+        return Math.min(this.config.maxSpeed, this.config.baseSpeed + this.score * this.config.ramp);
+      }
+
+      start(mode) {
+        this.mode = mode;
+        this.score = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.stored = 0;
+        this.lives = this.config.lives;
+        this.elapsed = 0;
+        this.boxes = [];
+        this.waveDelay = 0;
+        this.countdown = 3;
+        this.phase = 'countdown';
+        this.emit('start');
+      }
+
+      spawnWave() {
+        this.boxes = Array.from({ length: this.config.boxes }, (_, channel) => ({
+          id: ++this.serial,
+          channel,
+          col: Math.ceil(this.config.cols / 2),
+          row: 1,
+          z: -11.5,
+          checked: [],
+          resolved: false,
+          target: {
+            col: Math.floor(this.random() * this.config.cols) + 1,
+            row: Math.floor(this.random() * this.config.rows) + 1
+          },
+          product: PRODUCTS[Math.floor(this.random() * PRODUCTS.length)]
+        }));
+
+        this.emit('wave');
+      }
+
+      move(channel, dx, dy) {
+        if (this.phase !== 'playing') return false;
+
+        const box = this.boxes.find(item => item.channel === channel && !item.resolved);
+        if (!box) return false;
+
+        if (dx) box.col = clamp(box.col + dx, 1, this.config.cols);
+
+        if (dy) {
+          const next = clamp(box.row + dy, 1, this.config.rows);
+          if (box.checked.includes(next)) {
+            this.emit('late');
+            return false;
+          }
+          box.row = next;
+        }
+
+        this.emit('move', { box });
+        return true;
+      }
+
+      resolve(box, success, reason) {
+        box.resolved = true;
+        box.success = success;
+
+        if (success) {
+          this.combo++;
+          this.stored++;
+          this.maxCombo = Math.max(this.maxCombo, this.combo);
+
+          const bonus = Math.min(20, Math.floor(this.combo / 5) * 5);
+          this.score += 10 + bonus;
+          this.emit('success', { box, points: 10 + bonus, bonus });
+        } else {
+          this.lives--;
+          this.combo = 0;
+          this.emit('miss', { box, reason });
+
+          if (!this.lives) {
+            this.phase = 'over';
+            this.emit('over', { reason });
+          }
+        }
+      }
+
+      update(dt) {
+        if (this.phase === 'countdown') {
+          this.countdown -= dt;
+          if (this.countdown <= 0) {
+            this.phase = 'playing';
+            this.spawnWave();
+            this.emit('ready');
+          }
+          return;
+        }
+
+        if (this.phase !== 'playing') return;
+
+        this.elapsed += dt;
+
+        if (!this.boxes.length || this.boxes.every(box => box.resolved)) {
+          this.waveDelay -= dt;
+          if (this.waveDelay <= 0) this.spawnWave();
+          return;
+        }
+
+        const speed = this.speed;
+
+        for (const box of this.boxes) {
+          if (box.resolved || this.phase !== 'playing') continue;
+
+          box.z += dt * speed;
+
+          for (let row = this.config.rows; row >= 1; row--) {
+            if (box.checked.includes(row) || box.z < rowDepth(row, this.config.rows)) continue;
+
+            box.checked.push(row);
+
+            if (box.row === row) {
+              const passedTarget = box.checked.includes(box.target.row) && box.target.row > row;
+              if (passedTarget) continue;
+
+              const success = box.col === box.target.col && row === box.target.row;
+              this.resolve(
+                box,
+                success,
+                `Destino incorreto: pedido X${box.target.col} / Y${box.target.row}, enviado a X${box.col} / Y${row}.`
+              );
+              break;
+            }
+          }
+
+          if (!box.resolved && box.z > 6.5) {
+            this.resolve(box, false, `Falha de estocagem: a caixa passou pela posição X${box.target.col} / Y${box.target.row}.`);
+          }
+        }
+
+        if (this.boxes.every(box => box.resolved)) this.waveDelay = 0.85;
+      }
+
+      pause() {
+        if (['playing', 'countdown'].includes(this.phase)) {
+          this.beforePause = this.phase;
+          this.phase = 'paused';
+          return true;
+        }
+        return false;
+      }
+
+      resume() {
+        if (this.phase === 'paused') this.phase = this.beforePause;
+      }
+
+      menu() {
+        this.phase = 'menu';
+        this.boxes = [];
+      }
+    }
+
+    class Soundtrack {
+      constructor() {
+        this.enabled = false;
+        this.context = null;
+      }
+
+      toggle() {
+        this.enabled = !this.enabled;
+        if (this.enabled) this.play('move');
+        return this.enabled;
+      }
+
+      play(kind) {
+        if (!this.enabled) return;
+
+        try {
+          this.context ||= new (window.AudioContext || window.webkitAudioContext)();
+          this.context.resume().catch(() => {});
+
+          const notes = {
+            move: [350],
+            success: [523, 659, 784],
+            miss: [180, 120],
+            start: [392, 523]
+          }[kind];
+
+          notes.forEach((frequency, index) => {
+            const oscillator = this.context.createOscillator();
+            const gain = this.context.createGain();
+            const at = this.context.currentTime + index * 0.085;
+
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequency;
+
+            gain.gain.setValueAtTime(0, at);
+            gain.gain.linearRampToValueAtTime(0.055, at + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.001, at + 0.15);
+
+            oscillator.connect(gain);
+            gain.connect(this.context.destination);
+            oscillator.start(at);
+            oscillator.stop(at + 0.16);
+          });
+        } catch {
+          this.enabled = false;
+        }
+      }
+    }
+
+    class Warehouse {
+      constructor(THREE, container) {
+        this.T = THREE;
+        this.container = container;
+        this.meshes = new Map();
+        this.tiles = [];
+        this.particles = [];
+        this.mode = 'easy';
+
+        this.setupScene();
+        this.setupLights();
+
+        this.environment = new THREE.Group();
+        this.grid = new THREE.Group();
+        this.scene.add(this.environment, this.grid);
+
+        this.buildEnvironment();
+        this.buildGrid('easy');
+
+        this.resizeObserver = new ResizeObserver(() => this.resize());
+        this.resizeObserver.observe(container);
+        this.resize();
+      }
+
+      setupScene() {
+        const THREE = this.T;
+
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color('#e8eddf');
+
+        this.camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+        this.camera.position.set(0, 17.3, 21.8);
+        this.camera.lookAt(0, 0, -1.2);
+
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFShadowMap;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 0.9;
+        this.renderer.domElement.setAttribute('aria-label', 'Armazém 3D com matriz de posições de estoque');
+
+        this.container.prepend(this.renderer.domElement);
+      }
+
+      setupLights() {
+        const THREE = this.T;
+
+        this.scene.add(new THREE.HemisphereLight(0xfff8dd, 0x9fae8c, 2.6));
+
+        const sun = new THREE.DirectionalLight(0xffffff, 3.3);
+        sun.position.set(-8, 16, 9);
+        sun.castShadow = true;
+        sun.shadow.mapSize.set(2048, 2048);
+        Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 45 });
+        sun.shadow.normalBias = 0.04;
+
+        this.scene.add(sun);
+      }
+
+      material(color, extra = {}) {
+        return new this.T.MeshStandardMaterial({ color, roughness: 0.83, ...extra });
+      }
+
+      cube(parent, size, position, color, extra = {}) {
+        const mesh = new this.T.Mesh(new this.T.BoxGeometry(...size), this.material(color, extra));
+        mesh.position.set(...position);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        parent.add(mesh);
+        return mesh;
+      }
+
+      label(parent, text, x, y, z, width, color = '#48613c', ground = false) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 128;
+
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 67px Arial';
+        ctx.fillText(text, 256, 65);
+
+        const texture = new this.T.CanvasTexture(canvas);
+        texture.colorSpace = this.T.SRGBColorSpace;
+
+        const material = new this.T.MeshBasicMaterial({
+          map: texture,
+          transparent: true,
+          side: this.T.DoubleSide,
+          depthWrite: false
+        });
+
+        const plane = new this.T.Mesh(new this.T.PlaneGeometry(width, width / 4), material);
+        plane.position.set(x, y, z);
+        if (ground) plane.rotation.x = -Math.PI / 2;
+
+        parent.add(plane);
+        return plane;
+      }
+
+      clearGroup(group) {
+        group.traverse(object => {
+          object.geometry?.dispose();
+
+          const materials = object.material
+            ? (Array.isArray(object.material) ? object.material : [object.material])
+            : [];
+
+          for (const material of materials) {
+            material.map?.dispose();
+            material.dispose();
+          }
+        });
+        group.clear();
+      }
+
+      buildEnvironment() {
+        const g = this.environment;
+
+        this.cube(g, [200, 0.15, 200], [0, -0.7, 0], '#e8eddf');
+        this.cube(g, [16.3, 0.5, 18.1], [0, -0.34, -1.9], '#c3cdb2');
+        this.cube(g, [15.9, 0.17, 17.7], [0, -0.02, -1.9], '#dee4ce');
+        this.cube(g, [15.8, 2.9, 0.25], [0, 1.35, -10.55], '#d3ddc2');
+        this.cube(g, [0.22, 1, 17.5], [-7.85, 0.5, -1.85], '#c7d3b4');
+        this.cube(g, [0.22, 1, 17.5], [7.85, 0.5, -1.85], '#c7d3b4');
+
+        this.cube(g, [4.5, 2.5, 0.28], [0, 1.25, -10.3], '#71916b');
+        for (let i = 0; i < 7; i++) {
+          this.cube(g, [4.25, 0.035, 0.04], [0, 0.3 + i * 0.32, -10.12], '#97ad83');
+        }
+        this.label(g, 'RECEBIMENTO', 0, 3.18, -10.2, 4.6, '#4c6740');
+
+        for (const side of [-1, 1]) {
+          for (const z of [-7.3, -2.9, 1.5]) {
+            this.buildRack(g, side, z);
+          }
+
+          for (let z = -9; z < 6.4; z += 0.85) {
+            this.cube(g, [0.15, 0.025, 0.48], [side * 5.7, 0.09, z], '#f2f2c7');
+          }
+
+          const cone = new this.T.Mesh(new this.T.ConeGeometry(0.18, 0.55, 6), this.material('#e69a55'));
+          cone.position.set(side * 6.6, 0.36, 5.7);
+          cone.castShadow = true;
+          g.add(cone);
+
+          this.cube(g, [0.5, 0.08, 0.5], [side * 6.6, 0.1, 5.7], '#ba7b43');
+        }
+
+        for (let x = -5.1; x < 5.3; x += 0.7) {
+          this.cube(g, [0.38, 0.025, 0.2], [x, 0.1, 6.8], '#93a772');
+        }
+        this.label(g, 'EXPEDIÇÃO  /  01', 0, 0.13, 7.25, 4.4, '#84936d', true);
+        this.label(g, '↓', 0, 0.12, -6.9, 2.8, '#a3b78d', true);
+      }
+
+      buildRack(parent, side, z) {
+        const rack = new this.T.Group();
+        rack.position.set(side * 6.62, 0, z);
+        parent.add(rack);
+
+        for (const x of [-0.65, 0.65]) {
+          for (const dz of [-1.45, 1.45]) {
+            this.cube(rack, [0.12, 2.9, 0.12], [x, 1.45, dz], '#66865f');
+          }
+        }
+
+        for (const y of [0.22, 1.55, 2.85]) {
+          this.cube(rack, [1.55, 0.14, 3.1], [0, y, 0], '#8eab76');
+
+          if (y < 2) {
+            for (const dz of [-0.9, 0.15, 1]) {
+              const carton = this.cube(rack, [0.86, 0.67, 0.76], [0, y + 0.42, dz], dz < 0 ? '#dba469' : '#e7bd81');
+              this.cube(rack, [0.16, 0.015, 0.79], [0, y + 0.76, dz], '#f1d7a6');
+              carton.rotation.y = side * 0.03;
+            }
+          }
+        }
+      }
+
+      buildGrid(mode) {
+        this.mode = mode;
+        this.clearGroup(this.grid);
+        this.tiles = [];
+
+        const { cols, rows } = MODES[mode];
+
+        for (let row = 1; row <= rows; row++) {
+          for (let col = 1; col <= cols; col++) {
+            const x = columnX(col, cols);
+            const z = rowDepth(row, rows);
+            const width = 10.6 / cols - 0.2;
+            const depth = 9.2 / rows - 0.2;
+
+            const tile = this.cube(this.grid, [width, 0.07, depth], [x, 0.12, z], '#c6d9ad');
+            const border = new this.T.LineSegments(
+              new this.T.EdgesGeometry(tile.geometry),
+              new this.T.LineBasicMaterial({ color: '#859f6c' })
+            );
+            tile.add(border);
+
+            this.label(this.grid, `${col}.${row}`, x, 0.17, z + depth / 2 - 0.36, 1.65, '#60794f', true);
+            this.tiles.push({ col, row, tile });
+          }
+
+          this.label(this.grid, `Y${row}`, -5.7, 0.17, rowDepth(row, rows), 1.15, '#536c44', true);
+        }
+
+        for (let col = 1; col <= cols; col++) {
+          this.label(this.grid, `X${col}`, columnX(col, cols), 0.17, 6.05, 1.1, '#536c44', true);
+        }
+      }
+
+      createCrate(box) {
+        const group = new this.T.Group();
+        const isOrange = box.channel === 0;
+        const color = isOrange ? '#f0a044' : '#4baada';
+        const tape = isOrange ? '#f3d5a0' : '#b7dbe2';
+        const accent = isOrange ? '#bc8448' : '#548ba1';
+
+        this.cube(group, [1.04, 1.04, 1.04], [0, 0, 0], color);
+        this.cube(group, [0.23, 0.016, 1.06], [0, 0.53, 0], tape);
+        this.cube(group, [0.23, 1.04, 0.015], [0, 0, 0.531], tape);
+        this.cube(group, [0.43, 0.35, 0.02], [-0.19, -0.1, 0.55], '#fff7df');
+        this.label(group, box.product.icon, -0.19, -0.1, 0.57, 0.49, '#56684b');
+        this.label(group, isOrange ? 'SETAS' : 'WASD', 0, 0.9, 0, 1.45, isOrange ? '#6e753e' : '#3a728b');
+
+        const ring = new this.T.Mesh(
+          new this.T.RingGeometry(0.65, 0.71, 32),
+          new this.T.MeshBasicMaterial({ color: accent, side: this.T.DoubleSide, transparent: true, opacity: 0.7 })
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 0.2;
+        this.scene.add(ring);
+
+        const aim = new this.T.Group();
+        const aimWidth = 10.6 / MODES[this.mode].cols - 0.35;
+
+        for (const side of [-1, 1]) {
+          for (const end of [-1, 1]) {
+            this.cube(aim, [0.35, 0.035, 0.07], [side * (aimWidth / 2 - 0.17), 0, end * 0.5], accent);
+            this.cube(aim, [0.07, 0.035, 0.35], [side * aimWidth / 2, 0, end * 0.36], accent);
+          }
+        }
+
+        this.scene.add(group, aim);
+
+        const entry = { group, ring, aim, x: columnX(box.col, MODES[this.mode].cols) };
+        this.meshes.set(box.id, entry);
+        return entry;
+      }
+
+      removeCrate(id) {
+        const entry = this.meshes.get(id);
+        if (!entry) return;
+
+        for (const item of [entry.group, entry.ring, entry.aim]) {
+          this.scene.remove(item);
+
+          if (item.isGroup) {
+            this.clearGroup(item);
+          } else {
+            item.geometry.dispose();
+            item.material.dispose();
+          }
+        }
+
+        this.meshes.delete(id);
+      }
+
+      burst(box, success) {
+        const entry = this.meshes.get(box.id);
+        if (!entry) return;
+
+        for (let i = 0; i < 12; i++) {
+          const color = success ? (i % 2 ? '#a9c977' : '#f5d686') : '#d98264';
+          const mesh = new this.T.Mesh(new this.T.BoxGeometry(0.13, 0.13, 0.13), this.material(color));
+          mesh.position.copy(entry.group.position);
+          this.scene.add(mesh);
+
+          this.particles.push({
+            mesh,
+            life: 0.9,
+            velocity: new this.T.Vector3(
+              (Math.random() - 0.5) * 4,
+              2 + Math.random() * 3,
+              (Math.random() - 0.5) * 4
+            )
+          });
+        }
+      }
+
+      resize() {
+        const { width, height } = this.container.getBoundingClientRect();
+        this.renderer.setSize(width, height);
+        this.camera.aspect = width / height;
+        this.camera.fov = this.camera.aspect < 1.05 ? 46 : 38;
+        this.camera.updateProjectionMatrix();
+      }
+
+      render(engine, dt, time) {
+        const config = MODES[this.mode];
+        const preview = engine.phase === 'menu';
+
+        const boxes = preview
+          ? [{
+              id: 'preview', channel: 0,
+              col: Math.ceil(config.cols / 2), row: 1, z: -0.6,
+              product: PRODUCTS[0],
+              target: { col: Math.ceil(config.cols / 2), row: 1 }
+            }]
+          : engine.boxes;
+
+        const ids = new Set(boxes.filter(box => !box.resolved).map(box => box.id));
+        for (const id of this.meshes.keys()) {
+          if (!ids.has(id)) this.removeCrate(id);
+        }
+
+        const active = boxes.filter(box => !box.resolved);
+        const shared = active.length === 2 && active[0].col === active[1].col;
+        const scale = config.cols === 5 ? 0.95 : 1.2;
+
+        for (const box of active) {
+          const entry = this.meshes.get(box.id) || this.createCrate(box);
+
+          entry.x += (columnX(box.col, config.cols) - entry.x) * (1 - Math.exp(-24 * dt));
+
+          const offset = shared ? (box.channel === 0 ? -0.43 : 0.43) : 0;
+
+          entry.group.scale.setScalar(scale);
+          entry.group.position.set(entry.x + offset, preview ? 1.5 + Math.sin(time * 1.4) * 0.12 : 0.81, box.z);
+          entry.group.rotation.y = preview ? -0.18 + Math.sin(time * 0.7) * 0.08 : -0.08;
+
+          entry.ring.position.set(entry.x + offset, 0.2, box.z);
+          entry.ring.scale.setScalar(scale);
+
+          entry.aim.position.set(
+            columnX(box.col, config.cols),
+            0.22 + box.channel * 0.045,
+            rowDepth(box.row, config.rows)
+          );
+          entry.aim.visible = !preview;
+        }
+
+        for (const { col, row, tile } of this.tiles) {
+          const lit = config.hint && boxes.some(box => !box.resolved && box.target.col === col && box.target.row === row);
+          tile.material.color.set(lit ? '#a7df4c' : '#c6d9ad');
+          tile.material.emissive.set(lit ? '#99b950' : '#000000');
+          tile.material.emissiveIntensity = lit ? 0.09 + Math.sin(time * 3) * 0.035 : 0;
+        }
+
+        this.updateParticles(dt);
+        this.renderer.render(this.scene, this.camera);
+      }
+
+      updateParticles(dt) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+
+          p.life -= dt;
+          p.velocity.y -= dt * 7;
+          p.mesh.position.addScaledVector(p.velocity, dt);
+          p.mesh.rotation.x += dt * 4;
+          p.mesh.rotation.z += dt * 3;
+          p.mesh.scale.setScalar(Math.max(0, p.life));
+
+          if (p.life <= 0) {
+            this.scene.remove(p.mesh);
+            p.mesh.geometry.dispose();
+            p.mesh.material.dispose();
+            this.particles.splice(i, 1);
+          }
+        }
+      }
+    }
+
+    class GameApp {
+      constructor() {
+        try {
+          this.store = new PlayerStore();
+        } catch {
+          this.store = new PlayerStore({
+            getItem() { return null; },
+            setItem() { throw new Error('Storage disabled'); },
+            removeItem() {}
+          });
+        }
+
+        this.engine = new GameEngine();
+        this.sound = new Soundtrack();
+        this.mode = 'easy';
+        this.rankingMode = 'easy';
+        this.player = '';
+        this.ready = false;
+        this.lastTime = 0;
+        this.feedbackTimer = 0;
+        this.lastHud = 0;
+        this.motionTime = 0;
+        this.reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        this.createInterface();
+        this.bindEvents();
+        this.renderPlayers();
+        this.setMode('easy');
+        $('storage-warning').hidden = this.store.available;
+      }
+
+      createInterface() {
+        $('difficulty-options').innerHTML = Object.entries(MODES)
+          .map(([key, mode]) =>
+            `<button class="difficulty-button" data-mode="${key}" aria-pressed="${key === this.mode}">${mode.name}</button>`)
+          .join('');
+
+        $('ranking-tabs').innerHTML = Object.entries(MODES)
+          .map(([key, mode]) =>
+            `<button class="rank-tab" role="tab" id="tab-${key}" aria-controls="ranking-list" data-rank="${key}" aria-selected="${key === this.rankingMode}">${mode.name}</button>`)
+          .join('');
+      }
+
+      renderPlayers() {
+        $('saved-players').replaceChildren(
+          ...Object.keys(this.store.data.players).sort().map(name => new Option(name, name))
+        );
+
+        if (this.store.data.lastPlayer) $('player-name').value = this.store.data.lastPlayer;
+        this.profileChanged();
+      }
+
+      profileChanged() {
+        const input = $('player-name');
+        input.value = input.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 12);
+
+        const name = input.value;
+        $('name-counter').textContent = `${name.length}/12`;
+        $('profile-note').textContent = Object.hasOwn(this.store.data.players, name)
+          ? 'Bem-vindo de volta! Seu recorde está salvo.'
+          : 'Até 12 letras · A–Z';
+        $('start-button').disabled = !this.ready || !/^[A-Z]{1,12}$/.test(name);
+      }
+
+      setMode(mode) {
+        this.mode = mode;
+        this.rankingMode = mode;
+
+        document.querySelectorAll('[data-mode]').forEach(button => {
+          button.setAttribute('aria-pressed', button.dataset.mode === mode);
+        });
+
+        const extra = mode === 'easy' ? ' · destino iluminado'
+          : mode === 'hard' ? ' · setas + WASD'
+          : ' · sem ajuda';
+        $('mode-detail').textContent = MODES[mode].detail + extra;
+        $('wasd-hint').hidden = mode !== 'hard';
+
+        this.warehouse?.buildGrid(mode);
+        this.renderRanking();
+      }
+
+      bindEvents() {
+        $('player-name').addEventListener('input', () => this.profileChanged());
+
+        $('difficulty-options').addEventListener('click', event => {
+          const button = event.target.closest('[data-mode]');
+          if (button) this.setMode(button.dataset.mode);
+        });
+
+        $('ranking-tabs').addEventListener('click', event => {
+          const button = event.target.closest('[data-rank]');
+          if (button) {
+            this.rankingMode = button.dataset.rank;
+            this.renderRanking();
+          }
+        });
+
+        $('start-button').addEventListener('click', () => this.start());
+        $('pause-button').addEventListener('click', () => this.pause());
+        $('help-button').addEventListener('click', () => this.help());
+        $('reload-button').addEventListener('click', () => location.reload());
+
+        document.querySelectorAll('[data-sound]').forEach(button => {
+          button.addEventListener('click', () => {
+            const enabled = this.sound.toggle();
+            document.querySelectorAll('[data-sound]').forEach(control => {
+              control.setAttribute('aria-pressed', enabled);
+              control.setAttribute('aria-label', enabled ? 'Desativar som' : 'Ativar som');
+            });
+          });
+        });
+
+        document.addEventListener('keydown', event => this.handleKey(event));
+        document.addEventListener('visibilitychange', () => { if (document.hidden) this.pause(); });
+        window.addEventListener('blur', () => this.pause());
+
+        this.bindEngineEvents();
+      }
+
+      bindEngineEvents() {
+        const engine = this.engine;
+
+        engine.addEventListener('wave', () => this.renderOrders());
+
+        engine.addEventListener('move', () => {
+          this.sound.play('move');
+          this.renderOrders();
+        });
+
+        engine.addEventListener('late', () => this.feedback('Linha ultrapassada', true));
+
+        engine.addEventListener('ready', () => this.sound.play('start'));
+
+        engine.addEventListener('success', ({ detail }) => {
+          this.warehouse.burst(detail.box, true);
+          this.sound.play('success');
+          this.feedback(`+${detail.points}${detail.bonus ? ' · COMBO!' : ''}`);
+          this.persistScore();
+          this.renderOrders();
+
+          if (!this.reducedMotion) {
+            $('score').animate([{ transform: 'scale(1.13)' }, { transform: 'scale(1)' }], { duration: 160, easing: 'ease-out' });
+          }
+        });
+
+        engine.addEventListener('miss', ({ detail }) => {
+          this.warehouse.burst(detail.box, false);
+          this.sound.play('miss');
+          this.feedback(engine.lives ? '−1 VIDA' : 'FIM DE JOGO', true);
+
+          if (!this.reducedMotion) {
+            $('error-flash').animate([{ opacity: .5 }, { opacity: 0 }], { duration: 280 });
+          }
+          this.renderOrders();
+        });
+
+        engine.addEventListener('over', ({ detail }) => this.gameOver(detail.reason));
+      }
+
+      handleKey(event) {
+        if (!$('modal-overlay').hidden) {
+          if (event.key === 'Tab') {
+            const controls = [...$('modal').querySelectorAll('button,input,select')];
+            const first = controls[0];
+            const last = controls.at(-1);
+
+            if (event.shiftKey && [first, $('modal')].includes(document.activeElement)) {
+              event.preventDefault();
+              last?.focus();
+            } else if (!event.shiftKey && [last, $('modal')].includes(document.activeElement)) {
+              event.preventDefault();
+              first?.focus();
+            }
+          }
+
+          if (event.key === 'Escape' && this.engine.phase !== 'over') {
+            event.preventDefault();
+            this.closeModal();
+            this.engine.resume();
+          }
+          return;
+        }
+
+        if (event.key === 'Escape' && !event.repeat) {
+          event.preventDefault();
+          this.pause();
+          return;
+        }
+
+        if (this.engine.phase === 'menu') {
+          if (event.key === 'Enter' && !event.repeat && document.activeElement.tagName !== 'BUTTON') {
+            event.preventDefault();
+            this.start();
+          }
+          return;
+        }
+
+        const controls = {
+          ArrowLeft: [0, -1, 0],
+          ArrowRight: [0, 1, 0],
+          ArrowUp: [0, 0, 1],
+          ArrowDown: [0, 0, -1],
+          KeyA: [1, -1, 0],
+          KeyD: [1, 1, 0],
+          KeyW: [1, 0, 1],
+          KeyS: [1, 0, -1]
+        };
+
+        const intent = controls[event.code];
+        if (intent) {
+          event.preventDefault();
+          if (!event.repeat) this.engine.move(...intent);
+        }
+      }
+
+      start() {
+        this.profileChanged();
+        if (!this.ready || $('start-button').disabled) return;
+
+        const name = $('player-name').value;
+        if (Object.hasOwn(this.store.data.players, name)) this.store.select(name);
+        else this.store.register(name);
+
+        this.player = name;
+        this.startingBest = this.store.best(name, this.mode);
+
+        this.closeModal();
+        document.activeElement?.blur();
+
+        $('menu-screen').hidden = true;
+        $('game-ui').hidden = false;
+        $('orders').replaceChildren();
+        $('feedback').hidden = true;
+        this.feedbackTimer = 0;
+
+        this.warehouse.buildGrid(this.mode);
+        this.engine.start(this.mode);
+        this.lastTime = performance.now();
+
+        this.updateHud();
+        this.sound.play('start');
+        $('storage-warning').hidden = this.store.available;
+      }
+
+      persistScore() {
+        this.store.record(this.player, this.mode, this.engine.score);
+        $('storage-warning').hidden = this.store.available;
+      }
+
+      returnMenu() {
+        if (this.player && this.engine.score > 0) this.persistScore();
+
+        this.closeModal();
+        this.engine.menu();
+
+        $('menu-screen').hidden = false;
+        $('game-ui').hidden = true;
+        $('countdown').hidden = true;
+        $('feedback').hidden = true;
+
+        this.renderPlayers();
+        this.rankingMode = this.mode;
+        this.renderRanking();
+        $('start-button').focus();
+      }
+
+      renderOrders() {
+        const { boxes, config } = this.engine;
+
+        $('orders').innerHTML = boxes.map(box => {
+          const position = box.target.row === 1 ? 'frente'
+            : box.target.row === config.rows ? 'fundo'
+            : '';
+          const done = box.resolved
+            ? `<div class="order-done">${box.success ? '✓' : '×'}</div>`
+            : '';
+
+          return `
+            <article class="order ${box.channel ? 'blue' : ''}">
+              <div class="order-heading">
+                <span class="product">${box.product.name}</span>
+                <span class="order-control">${box.channel ? 'WASD' : 'SETAS'}</span>
+              </div>
+              <div class="order-target">X${box.target.col}<span>/</span>Y${box.target.row}</div>
+              <div class="order-aim">
+                <span>Mira: X${box.col} / Y${box.row}</span>
+                <span>${position}</span>
+              </div>
+              ${done}
+            </article>`;
+        }).join('');
+      }
+
+      renderRanking() {
+        document.querySelectorAll('[data-rank]').forEach(button => {
+          button.setAttribute('aria-selected', button.dataset.rank === this.rankingMode);
+        });
+        $('ranking-list').setAttribute('aria-labelledby', `tab-${this.rankingMode}`);
+
+        const records = this.store.ranking(this.rankingMode);
+
+        $('ranking-list').innerHTML = records.length
+          ? records.map((record, index) => `
+              <div class="rank-row">
+                <span class="position">${String(index + 1).padStart(2, '0')}</span>
+                <b title="${record.name}">${record.name}</b>
+                <span class="rank-score">${record.score.toLocaleString('pt-BR')}</span>
+              </div>`).join('')
+          : '<div class="rank-empty"><span>—</span>O primeiro recorde pode ser seu.</div>';
+      }
+
+      updateHud() {
+        if (this.engine.phase === 'menu') return;
+
+        const { score, lives, combo } = this.engine;
+
+        $('score').textContent = score.toLocaleString('pt-BR');
+        $('lives').textContent = '♥'.repeat(Math.max(0, lives));
+        $('lives').setAttribute('aria-label', `${lives} ${lives === 1 ? 'vida' : 'vidas'}`);
+        $('combo').textContent = combo >= 2 ? `${combo} EM SEQUÊNCIA` : '';
+      }
+
+      feedback(message, error = false) {
+        $('feedback').textContent = message;
+        $('feedback').classList.toggle('error', error);
+        $('feedback').hidden = false;
+        this.feedbackTimer = 1.25;
+      }
+
+      openModal(html) {
+        this.previousFocus = document.activeElement;
+        $('modal').innerHTML = html;
+        $('modal-overlay').hidden = false;
+        $('modal').focus();
+      }
+
+      closeModal() {
+        $('modal-overlay').hidden = true;
+
+        if (this.previousFocus?.isConnected && this.previousFocus.offsetParent !== null) {
+          this.previousFocus.focus();
+        }
+      }
+
+      pause() {
+        if (!this.engine.pause()) return;
+
+        this.openModal(`
+          <h2 id="modal-title">PAUSA</h2>
+          <button class="primary" id="resume-button">CONTINUAR ▶</button>
+          <button class="secondary" id="leave-button">Voltar ao menu</button>`);
+
+        $('resume-button').onclick = () => {
+          this.closeModal();
+          this.engine.resume();
+        };
+        $('leave-button').onclick = () => this.returnMenu();
+      }
+
+      help() {
+        this.openModal(`
+          <h2 id="modal-title">COMO JOGAR</h2>
+          <div class="help-step">
+            <span class="number">1</span>
+            <span>Leia o destino da caixa: <b>X é coluna, Y é linha.</b></span>
+          </div>
+          <div class="help-step">
+            <span class="number">2</span>
+            <span>
+              <kbd>←</kbd> <kbd>→</kbd> escolhem a coluna.<br>
+              <kbd>↑</kbd> vai ao fundo. <kbd>↓</kbd> vai à frente.
+            </span>
+          </div>
+          <div class="help-step">
+            <span class="number">3</span>
+            <span>Acerte a posição <b>antes de a caixa chegar.</b> Cada acerto vale pontos.</span>
+          </div>
+          <p class="help-small">
+            No difícil, a caixa azul usa <b>WASD</b>.<br>
+            Y1 fica na frente. <b>Esc</b> pausa.<br>
+            Acertos em sequência dão bônus.
+          </p>
+          <button class="primary" id="help-close">ENTENDI</button>`);
+
+        $('help-close').onclick = () => this.closeModal();
+      }
+
+      gameOver(reason) {
+        this.persistScore();
+        this.updateHud();
+
+        const isRecord = this.engine.score > this.startingBest;
+        const detail = reason.startsWith('Falha')
+          ? 'A caixa passou do destino.'
+          : 'A caixa foi para a posição errada.';
+
+        this.openModal(`
+          <h2 id="modal-title">FIM DE JOGO</h2>
+          <div class="result-score">${this.engine.score.toLocaleString('pt-BR')}</div>
+          <div class="result-record">${isRecord ? 'NOVO RECORDE!' : 'PONTOS'}</div>
+          <p class="result-reason">${detail}</p>
+          <button class="primary" id="retry-button">JOGAR DE NOVO ↻</button>
+          <button class="secondary" id="menu-button">Voltar ao menu</button>`);
+
+        $('retry-button').onclick = () => this.start();
+        $('menu-button').onclick = () => this.returnMenu();
+      }
+
+      async initialize() {
+        try {
+          const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js');
+
+          this.warehouse = new Warehouse(THREE, $('stage'));
+          this.warehouse.buildGrid(this.mode);
+
+          this.ready = true;
+          $('start-button').textContent = 'JOGAR ▶';
+          this.profileChanged();
+
+          this.rendererCanvas = this.warehouse.renderer.domElement;
+          this.rendererCanvas.addEventListener('webglcontextlost', event => {
+            event.preventDefault();
+            this.pause();
+            $('load-error').hidden = false;
+          });
+
+          this.lastTime = performance.now();
+          requestAnimationFrame(time => this.frame(time));
+        } catch (error) {
+          $('load-error').hidden = false;
+          console.error(error);
+        }
+      }
+
+      frame(time) {
+        const elapsed = Math.max(0, (time - this.lastTime) / 1000);
+        const dt = Math.min(elapsed, 0.08);
+        this.lastTime = time;
+
+        if (elapsed > 0.5) {
+          this.pause();
+        } else {
+          let remaining = elapsed;
+          while (remaining > 0) {
+            const step = Math.min(remaining, 1 / 120);
+            this.engine.update(step);
+            remaining -= step;
+          }
+        }
+
+        $('countdown').hidden = this.engine.phase !== 'countdown';
+        if (this.engine.phase === 'countdown') {
+          $('countdown-number').textContent = Math.max(1, Math.ceil(this.engine.countdown));
+        }
+
+        if (this.engine.phase !== 'paused') {
+          this.motionTime += dt;
+
+          if (this.feedbackTimer > 0) {
+            this.feedbackTimer -= dt;
+            if (this.feedbackTimer <= 0) $('feedback').hidden = true;
+          }
+        }
+
+        if (time - this.lastHud > 80) {
+          this.updateHud();
+          this.lastHud = time;
+        }
+
+        const renderDelta = this.engine.phase === 'paused' ? 0 : dt;
+        this.warehouse.render(this.engine, renderDelta, this.reducedMotion ? 0 : this.motionTime);
+
+        requestAnimationFrame(next => this.frame(next));
+      }
+    }
+
+    const app = new GameApp();
+    app.initialize();
+  </script>
+</body>
+
+</html>
